@@ -209,7 +209,7 @@ impl SmartTable {
 
     /// Sets the tables options
     pub fn set_opts(&mut self, opts: TableOpts) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         data.resize(opts.rows as _, vec![]);
         for v in data.iter_mut() {
             v.resize(opts.cols as _, String::new());
@@ -260,9 +260,9 @@ impl SmartTable {
             let row_headers = self.row_headers.clone();
             let col_headers = self.col_headers.clone();
             move |t, ctx, row, col, x, y, w, h| {
-                if let Ok(data) = data.try_lock() {
-                    let row_headers = row_headers.try_lock().unwrap();
-                    let col_headers = col_headers.try_lock().unwrap();
+                if let Ok(data) = data.lock() {
+                    let row_headers = row_headers.lock().unwrap();
+                    let col_headers = col_headers.lock().unwrap();
                     match ctx {
                         table::TableContext::StartPage => draw::set_font(Font::Helvetica, 14),
                         table::TableContext::ColHeader => {
@@ -303,7 +303,7 @@ impl SmartTable {
                 let mut table = self.table.clone();
                 move |i| {
                     let cell = cell.borrow();
-                    data.try_lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
+                    data.lock().unwrap()[cell.row as usize][cell.col as usize] = i.value();
                     i.set_value("");
                     i.hide();
                     table.redraw();
@@ -326,7 +326,7 @@ impl SmartTable {
                 let data = self.data.clone();
                 move |_, ev| match ev {
                     Event::Released => {
-                        if let Ok(data) = data.try_lock() {
+                        if let Ok(data) = data.lock() {
                             let cell = cell.borrow();
                             inp.resize(cell.x, cell.y, cell.w, cell.h);
                             inp.set_value(&data[cell.row as usize][cell.col as usize]);
@@ -357,7 +357,7 @@ impl SmartTable {
 
     /// Get a copy of the data
     pub fn data(&self) -> StringMatrix {
-        self.data.try_lock().unwrap().clone()
+        self.data.lock().unwrap().clone()
     }
 
     /// Get the inner data
@@ -405,125 +405,125 @@ impl SmartTable {
 
     /// Set the row header value at the row index
     pub fn set_row_header_value(&mut self, row: i32, val: &str) {
-        self.row_headers.try_lock().unwrap()[row as usize] = val.to_string();
+        self.row_headers.lock().unwrap()[row as usize] = val.to_string();
     }
 
     /// Set the column header value at the column index
     pub fn set_col_header_value(&mut self, col: i32, val: &str) {
-        self.col_headers.try_lock().unwrap()[col as usize] = val.to_string();
+        self.col_headers.lock().unwrap()[col as usize] = val.to_string();
     }
 
     /// Get the row header value at the row index
     pub fn row_header_value(&mut self, row: i32) -> String {
-        self.row_headers.try_lock().unwrap()[row as usize].clone()
+        self.row_headers.lock().unwrap()[row as usize].clone()
     }
     
     /// Get the column header value at the column index
     pub fn col_header_value(&mut self, col: i32) -> String {
-        self.col_headers.try_lock().unwrap()[col as usize].clone()
+        self.col_headers.lock().unwrap()[col as usize].clone()
     }
 
     /// Insert an empty row at the row index
     pub fn insert_empty_row(&mut self, row: i32, row_header: &str) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         let cols = data[0].len();
         data.insert(row as _, vec![]);
         data[row as usize ].resize(cols as _ , String::new());
-        self.row_headers.try_lock().unwrap().insert(row as _, row_header.to_string());
+        self.row_headers.lock().unwrap().insert(row as _, row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Append a row to your table
     pub fn insert_row(&mut self, row: i32, row_header: &str, vals: &[&str]) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         let cols = data[0].len();
         assert!(cols == vals.len());
         data.insert(row as _, vals.iter().map(|v| v.to_string()).collect());
-        self.row_headers.try_lock().unwrap().push(row_header.to_string());
+        self.row_headers.lock().unwrap().push(row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Append an empty row to your table
     pub fn append_empty_row(&mut self, row_header: &str) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         let cols = data[0].len();
         data.push(vec![]);
         data.last_mut().unwrap().resize(cols as _ , String::new());
-        self.row_headers.try_lock().unwrap().push(row_header.to_string());
+        self.row_headers.lock().unwrap().push(row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Append a row to your table
     pub fn append_row(&mut self, row_header: &str, vals: &[&str]) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         let cols = data[0].len();
         assert!(cols == vals.len());
         data.push(vals.iter().map(|v| v.to_string()).collect());
-        self.row_headers.try_lock().unwrap().push(row_header.to_string());
+        self.row_headers.lock().unwrap().push(row_header.to_string());
         self.table.set_rows(self.table.rows()+1);
     }
 
     /// Insert an empty column at the column index
     pub fn insert_empty_col(&mut self, col: i32, col_header: &str) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         for v in data.iter_mut() {
             v.insert(col as _, String::new());
         }
-        self.col_headers.try_lock().unwrap().insert(col as _, col_header.to_string());
+        self.col_headers.lock().unwrap().insert(col as _, col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
     /// Append a column to your table
     pub fn insert_col(&mut self, col: i32, col_header: &str, vals: &[&str]) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         assert!(vals.len() == self.table.rows() as usize);
         let mut count = 0;
         for v in data.iter_mut() {
             v.insert(col as _, vals[count].to_string());
             count += 1;
         }
-        self.col_headers.try_lock().unwrap().push(col_header.to_string());
+        self.col_headers.lock().unwrap().push(col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
     /// Append an empty column to your table
     pub fn append_empty_col(&mut self, col_header: &str) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         for v in data.iter_mut() {
             v.push(String::new());
         }
-        self.col_headers.try_lock().unwrap().push(col_header.to_string());
+        self.col_headers.lock().unwrap().push(col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
     /// Append a column to your table
     pub fn append_col(&mut self, col_header: &str, vals: &[&str]) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         assert!(vals.len() == self.table.rows() as usize);
         let mut count = 0;
         for v in data.iter_mut() {
             v.push(vals[count].to_string());
             count += 1;
         }
-        self.col_headers.try_lock().unwrap().push(col_header.to_string());
+        self.col_headers.lock().unwrap().push(col_header.to_string());
         self.table.set_cols(self.table.cols()+1);
     }
 
     /// Remove a row at the row index
     pub fn remove_row(&mut self, row: i32) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         data.remove(row as _);
-        self.row_headers.try_lock().unwrap().remove(row as _);
+        self.row_headers.lock().unwrap().remove(row as _);
         self.table.set_rows(self.table.rows()-1);
     }
 
     /// Remove a column at the column index
     pub fn remove_col(&mut self, col: i32) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         for v in data.iter_mut() {
             v.remove(col as _);
         }
-        self.col_headers.try_lock().unwrap().remove(col as _);
+        self.col_headers.lock().unwrap().remove(col as _);
         self.table.set_cols(self.table.cols()-1);
     }
 
@@ -537,7 +537,7 @@ impl SmartTable {
 
     /// Clears all cells in the table
     pub fn clear(&mut self) {
-        let mut data = self.data.try_lock().unwrap();
+        let mut data = self.data.lock().unwrap();
         for v in data.iter_mut() {
             for c in v.iter_mut() {
                 *c = String::new();
