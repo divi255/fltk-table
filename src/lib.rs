@@ -395,7 +395,7 @@ impl SmartTable {
 
     /// Set the cell value, using the row and column to index the data
     pub fn set_cell_value(&mut self, row: i32, col: i32, val: &str) {
-        self.data.try_lock().unwrap()[row as usize][col as usize] = val.to_string();
+        self.data.lock().unwrap()[row as usize][col as usize] = val.to_string();
     }
 
     /// Get the cell value, using the row and column to index the data
