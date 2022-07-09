@@ -400,7 +400,7 @@ impl SmartTable {
 
     /// Get the cell value, using the row and column to index the data
     pub fn cell_value(&self, row: i32, col: i32) -> String {
-        self.data.try_lock().unwrap()[row as usize][col as usize].clone()
+        self.data.lock().unwrap()[row as usize][col as usize].clone()
     }
 
     /// Set the row header value at the row index
